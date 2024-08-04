@@ -8,7 +8,10 @@ NutriProm es una aplicación de reconocimiento de imágenes que convierte predic
 1. **Clona el repositorio** (si aún no lo has hecho):
    ```bash
    git clone <URL_DEL_REPOSITORIO>
-   cd /backend
+   cd backend
+   crear carpeta models
+   descargar md5 de entrenamiento **[Descargar el modelo de TensorFlow](<>)**
+   dejar copiarlo en la carpeta models 
 
 2. **Instalar las Dependencias**:
    ```bash
