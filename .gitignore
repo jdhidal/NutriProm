@@ -1,0 +1,5 @@
+# Modelos pesados y datos
+backend/models/
+backend/flagged/
+.env
+venv/
