@@ -103,11 +103,18 @@ def llama3_predict(products):
     try:
         # Aquí usas la biblioteca de ollama para obtener la información nutricional
         response = ollama.chat(model='llama3.1', messages=[{"role": "user", "content": prompt}])
-        return response
+        
+        # Imprimir la respuesta completa para depuración
+        print(f"API response: {response}")  # Depuración
+        
+        # Ajustar para extraer la información nutricional relevante
+        nutrition_info = response['message']['content']
+        
+        return {'nutrition_info': nutrition_info}
     
     except Exception as e:
         print(f"Error occurred: {str(e)}")  # Depuración
-        return {'error': str(e)}
+        return {'nutrition_info': f"Error al obtener la información nutricional: {str(e)}"}
 
 def combined_predict(image):
     """Combina la predicción de imagen con la predicción de Llama 3."""
@@ -118,16 +125,16 @@ def combined_predict(image):
     
     llama3_result = llama3_predict(grams)
     
-    return {
-        'grams': grams,
-        'llama3': llama3_result
-    }
+    grams_text = "Predicciones en gramos:\n" + "\n".join([f"{key}: {value} g" for key, value in grams.items()])
+    llama3_text = "Información nutricional:\n" + llama3_result.get('nutrition_info', 'No data available')
+    
+    return grams_text, llama3_text
 
 # Crear interfaz de Gradio
 iface = gr.Interface(
     fn=combined_predict, 
     inputs=gr.Image(type="pil"), 
-    outputs=gr.JSON(),
+    outputs=[gr.Textbox(label="Predicciones en gramos"), gr.Textbox(label="Información nutricional")],
     title="Predicción Nutricional de Alimentos con Llama 3",
     description="Sube una imagen de un alimento para obtener una predicción en gramos de los nutrientes presentes y una evaluación nutricional adicional con Llama 3.",
     live=True
