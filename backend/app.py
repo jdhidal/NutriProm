@@ -5,6 +5,7 @@ from PIL import Image
 import numpy as np
 import os
 import gradio as gr
+import ollama  # Importar la biblioteca de ollama
 from dotenv import load_dotenv
 
 # Cargar variables de entorno desde el archivo .env
@@ -95,9 +96,44 @@ def predict(image):
         print(f"Error occurred: {str(e)}")  # Depuración
         return {'error': str(e)}
 
-# Crear interfaz de Gradio
-iface = gr.Interface(fn=predict, inputs=gr.Image(type="pil"), outputs=gr.JSON())
+def llama3_predict(products):
+    """Envía los productos y sus gramos a la API de Llama 3 y obtiene los resultados nutricionales."""
+    prompt = f"Calcula los datos nutricionales de los siguientes alimentos con sus gramos: {products}. Devuelve la información nutricional detallada incluyendo proteínas, carbohidratos, grasas, vitaminas y minerales."
+    
+    try:
+        # Aquí usas la biblioteca de ollama para obtener la información nutricional
+        response = ollama.chat(model='llama3.1', messages=[{"role": "user", "content": prompt}])
+        return response
+    
+    except Exception as e:
+        print(f"Error occurred: {str(e)}")  # Depuración
+        return {'error': str(e)}
 
+def combined_predict(image):
+    """Combina la predicción de imagen con la predicción de Llama 3."""
+    grams = predict(image)
+    
+    if 'error' in grams:
+        return grams
+    
+    llama3_result = llama3_predict(grams)
+    
+    return {
+        'grams': grams,
+        'llama3': llama3_result
+    }
+
+# Crear interfaz de Gradio
+iface = gr.Interface(
+    fn=combined_predict, 
+    inputs=gr.Image(type="pil"), 
+    outputs=gr.JSON(),
+    title="Predicción Nutricional de Alimentos con Llama 3",
+    description="Sube una imagen de un alimento para obtener una predicción en gramos de los nutrientes presentes y una evaluación nutricional adicional con Llama 3.",
+    live=True
+)
+
+# Ejecutar la interfaz de Gradio
 if __name__ == '__main__':
     iface.launch(share=True)
     app.run(debug=True, host='0.0.0.0', port=5000)
