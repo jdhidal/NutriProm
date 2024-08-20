@@ -40,7 +40,7 @@ if len(labels) != num_outputs:
     raise ValueError(f"El número de etiquetas ({len(labels)}) no coincide con el número de salidas del modelo ({num_outputs})")
 
 # Tamaño de imagen
-image_size = (224, 224)  # Tamaño al que quieres reescalar las imágenes
+image_size = (224, 224)  # Tamaño al que quieres reescalar las imágenes 299 - 224 
 
 # Carpeta para guardar imágenes subidas
 UPLOAD_FOLDER = 'uploads'
@@ -98,23 +98,21 @@ def predict(image):
 
 def llama3_predict(products):
     """Envía los productos y sus gramos a la API de Llama 3 y obtiene los resultados nutricionales."""
-    prompt = f"Calcula los datos nutricionales de los siguientes alimentos con sus gramos: {products}. Devuelve la información nutricional detallada incluyendo proteínas, carbohidratos, grasas, vitaminas y minerales."
+    prompt = f"Proporciona información nutricional detallada para los siguientes alimentos con las cantidades en gramos: {products}. Incluye detalles sobre proteínas, carbohidratos, grasas, vitaminas, minerales, calorías, y cualquier otro nutriente relevante. Si no puedes proporcionar información detallada, proporciona un resumen general."
     
     try:
-        # Aquí usas la biblioteca de ollama para obtener la información nutricional
         response = ollama.chat(model='llama3.1', messages=[{"role": "user", "content": prompt}])
-        
-        # Imprimir la respuesta completa para depuración
         print(f"API response: {response}")  # Depuración
-        
-        # Ajustar para extraer la información nutricional relevante
-        nutrition_info = response['message']['content']
-        
+        nutrition_info = response.get('message', {}).get('content', 'No data available')
         return {'nutrition_info': nutrition_info}
     
-    except Exception as e:
-        print(f"Error occurred: {str(e)}")  # Depuración
+    except KeyError as e:
+        print(f"KeyError: {str(e)} - Verifica la estructura de la respuesta de la API")
         return {'nutrition_info': f"Error al obtener la información nutricional: {str(e)}"}
+    except Exception as e:
+        print(f"Error occurred: {str(e)}")
+        return {'nutrition_info': f"Error al obtener la información nutricional: {str(e)}"}
+
 
 def combined_predict(image):
     """Combina la predicción de imagen con la predicción de Llama 3."""
@@ -135,8 +133,8 @@ iface = gr.Interface(
     fn=combined_predict, 
     inputs=gr.Image(type="pil"), 
     outputs=[gr.Textbox(label="Predicciones en gramos"), gr.Textbox(label="Información nutricional")],
-    title="Predicción Nutricional de Alimentos con Llama 3",
-    description="Sube una imagen de un alimento para obtener una predicción en gramos de los nutrientes presentes y una evaluación nutricional adicional con Llama 3.",
+    title="Predicción Nutricional de Alimentos",
+    description="Sube una imagen de un alimento para obtener una predicción en gramos de los nutrientes presentes y una evaluación nutricional adicional",
     live=True
 )
 
